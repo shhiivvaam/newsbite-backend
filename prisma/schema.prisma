@@ -1,0 +1,80 @@
+generator client {
+provider = "prisma-client-js"
+}
+
+datasource db {
+provider = "postgresql"
+url      = env("DATABASE_URL")
+}
+
+model categories {
+id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+name       String    @unique
+color      String?   // 👈 Add this
+created_at DateTime? @default(now()) @db.Timestamptz(6)
+updated_at DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+news       news[]
+
+@@index([name], map: "idx_categories_name")
+}
+
+model articles {
+id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+title            String
+subtitle         String
+author_name      String
+author_avatar    String
+date             String
+read_time        String
+category         String
+content          String
+tags             String[]
+image_url        String
+created_at       DateTime? @default(now()) @db.Timestamptz(6)
+updated_at       DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+slug             String?
+meta_description String?
+keywords         String?
+status           String    @default("draft")
+scheduled_date   DateTime? @db.Timestamptz(6)
+image_alt_text   String?
+category_id      String?   @db.Uuid
+
+@@index([tags], map: "idx_articles_tags", type: Gin)
+@@index([category], map: "idx_articles_category")
+@@index([category_id], map: "idx_articles_category_id")
+}
+
+model news {
+id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+title        String
+content      String
+category     String?
+created_at   DateTime?   @default(now()) @db.Timestamptz(6)
+updated_at   DateTime?   @default(now()) @updatedAt @db.Timestamptz(6)
+published_at DateTime?   @db.Timestamptz(6)
+is_published Boolean?    @default(false)
+image_url    String?
+
+category_rel categories? @relation(fields: [category], references: [name], map: "news_category_fkey")
+
+@@index([category], map: "idx_news_category")
+@@index([published_at], map: "idx_news_published_at")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  USER
+}
+
+model users {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email      String    @unique
+  password   String
+  role       UserRole  @default(USER)   // 👈 NEW
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([email], map: "idx_users_email")
+}
